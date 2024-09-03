@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using OpenSteamClient.DI.Attributes;
+using OpenSteamClient.DI.Lifetime;
 
 namespace OpenSteamClient.DI;
 
@@ -63,6 +64,10 @@ public sealed class ContainerReferenceImplementation : IContainer
 				Type interfaceType = ifaceAttr.GetType().GetGenericArguments().First();
 				this.factories.Add(interfaceType, factoryMethod);
 				this.registeredObjects.Add(interfaceType, factoryPlaceholderObject);
+			}
+
+			if (this.TryGet(out ILifetimeManager? lifetimeManager)) {
+				lifetimeManager.RegisterContainerType(type);
 			}
 		}
     }
@@ -132,6 +137,11 @@ public sealed class ContainerReferenceImplementation : IContainer
 	
 	
 	        this.registeredObjects.Add(type, instance);
+
+			if (this.TryGet(out ILifetimeManager? lifetimeManager)) {
+				lifetimeManager.RegisterContainerType(type);
+			}
+
 	        return instance;
 		}
     }

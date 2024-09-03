@@ -9,7 +9,7 @@ namespace OpenSteamClient.DI;
 public interface IContainer {
 	/// <summary>
 	/// Register a factory method, so that when it attempts to get retrieved with TryGet, it will run the factory method and produce it's output.
-	/// For implementers: The output of the factory method should be registered, and the factory removed.
+	/// If the object implements IClientLifetime or ILogonLifetime, it will be added to the ILifetimeManager instance registered, if any.
 	/// </summary>
 	/// <param name="type">The type we're registering a factory for</param>
 	/// <param name="factoryMethod">The factory method. Can have arguments, which will be dependency injected.</param>
@@ -17,6 +17,7 @@ public interface IContainer {
 
 	/// <summary>
 	/// Register an object into the container.
+	/// If the object implements IClientLifetime or ILogonLifetime, it will be added to the ILifetimeManager instance registered, if any.
 	/// </summary>
 	/// <param name="instance">The object to register.</param>
 	/// <returns>The registered object.</returns>
