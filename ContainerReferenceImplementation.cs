@@ -37,7 +37,7 @@ public sealed class ContainerReferenceImplementation : IContainer
 
 		foreach (var item in initialServices)
 		{
-			this.RegisterInstance(item);
+			this.RegisterInstance(item.GetType(), item);
 		}
     }
 
@@ -113,21 +113,19 @@ public sealed class ContainerReferenceImplementation : IContainer
 				}
 			}
 	
-			this.RegisterInstance(ret);
+			this.RegisterInstance(type, ret);
 			return ret;
 		}
     }
 
 	/// <inheritdoc/>
-    public object RegisterInstance(object instance)
+    public object RegisterInstance(Type registerableType, object instance)
     {
 		lock (containerLock)
 		{
-			var type = instance.GetType();
-	
-	        if (this.registeredObjects.ContainsKey(type))
+	        if (this.registeredObjects.ContainsKey(registerableType))
 	        {
-	            throw new InvalidOperationException("Type '" + type + "' already registered.");
+	            throw new InvalidOperationException("Type '" + registerableType + "' already registered.");
 	        }
 	
 	        if (instance == null)
@@ -136,10 +134,17 @@ public sealed class ContainerReferenceImplementation : IContainer
 	        }
 	
 	
-	        this.registeredObjects.Add(type, instance);
+	        this.registeredObjects.Add(registerableType, instance);
 
 			if (this.TryGet(out ILifetimeManager? lifetimeManager)) {
-				lifetimeManager.RegisterContainerType(type);
+				lifetimeManager.RegisterContainerType(registerableType);
+			}
+
+			var implementedInterfacesAttrs = registerableType.GetCustomAttributes(typeof(DIRegisterInterfaceAttribute<>));
+			foreach (var ifaceAttr in implementedInterfacesAttrs)
+			{
+				Type interfaceType = ifaceAttr.GetType().GetGenericArguments().First();
+				RegisterInstance(interfaceType, instance);
 			}
 
 	        return instance;

@@ -19,9 +19,10 @@ public interface IContainer {
 	/// Register an object into the container.
 	/// If the object implements IClientLifetime or ILogonLifetime, it will be added to the ILifetimeManager instance registered, if any.
 	/// </summary>
+	/// <param name="registerableType">The type to register this object as.</param>
 	/// <param name="instance">The object to register.</param>
 	/// <returns>The registered object.</returns>
-    public object RegisterInstance(object instance);
+    public object RegisterInstance(Type registerableType, object instance);
 
 	/// <summary>
 	/// Try to retrieve a given object from the container.

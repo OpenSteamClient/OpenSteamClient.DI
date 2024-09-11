@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using OpenSteamClient.DI.Lifetime;
 
 namespace OpenSteamClient.DI;
 
@@ -51,7 +53,7 @@ public static class IContainerExtensions {
 		Type[] extraArgsTypes = extraArgs.Select(t => t.GetType()).ToArray();
 		foreach (var argType in wantedArgs)
 		{
-			ctorArgsBuilt.Add(Array.Find(extraArgs, p => p.GetType() == argType) ?? Get(container, type));
+			ctorArgsBuilt.Add(Array.Find(extraArgs, p => p.GetType() == argType) ?? Get(container, argType));
 		}
 
 		return ctor.Invoke(ctorArgsBuilt.ToArray());
@@ -69,7 +71,7 @@ public static class IContainerExtensions {
 		Type[] wantedArgs = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
 		foreach (var argType in wantedArgs)
 		{
-			ctorArgsBuilt.Add(Get(container, type));
+			ctorArgsBuilt.Add(Get(container, argType));
 		}
 
 		return ctor.Invoke(ctorArgsBuilt.ToArray());
@@ -80,8 +82,12 @@ public static class IContainerExtensions {
 	/// </summary>
 	/// <param name="instance">The object to register.</param>
 	/// <returns>The registered object.</returns>
-	public static T RegisterInstance<T>(this IContainer container, T instance) where T: notnull
-		=> (T)container.RegisterInstance(instance);
+	public static T RegisterInstance<T>(this IContainer container, T instance) where T: class
+		=> (T)container.RegisterInstance(typeof(T), instance);
+
+	[Obsolete("Your code is trying to register System.Object!")]
+	public static object RegisterInstance(this IContainer container, object instance)
+		=> throw new UnreachableException("Do not call this! Your code has errors, and is trying to register System.Object!");
 
 	/// <summary>
 	/// Register the type to be lazily constructed.
@@ -93,17 +99,17 @@ public static class IContainerExtensions {
 	/// Construct the type, and register it.
 	/// </summary>
 	public static object ConstructAndRegister(this IContainer container, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type)
-		=> container.RegisterInstance(Construct(container, type));
+		=> container.RegisterInstance(type, Construct(container, type));
 
 	/// <summary>
 	/// Register a factory method, so that when it attempts to get retrieved with TryGet, it will run the factory method and produce it's output.
 	/// For implementers: The output of the factory method should be registered, and the factory removed.
 	/// </summary>
 	/// <param name="factoryMethod">The factory method. Can have arguments, which will be dependency injected.</param>
-	public static void RegisterFactoryMethod<T>(this IContainer container, Delegate factoryMethod) where T: notnull
+	public static void RegisterFactoryMethod<T>(this IContainer container, Delegate factoryMethod) where T: class
 		=> container.RegisterFactoryMethod(typeof(T), factoryMethod);
 
-	public static bool TryGet<T>(this IContainer container, [NotNullWhen(true)] out T? obj)
+	public static bool TryGet<T>(this IContainer container, [NotNullWhen(true)] out T? obj) where T: class
 	{
 		// Stinky C# syntax at it again
 		bool ret = container.TryGet(typeof(T), out object? untyped);
@@ -114,10 +120,10 @@ public static class IContainerExtensions {
 	public static bool Contains(this IContainer container, Type type)
 		=> container.TryGet(type, out _);
 
-	public static bool Contains<T>(this IContainer container)
+	public static bool Contains<T>(this IContainer container) where T: class
 		=> Contains(container, typeof(T));
 		
-	public static T Get<T>(this IContainer container)
+	public static T Get<T>(this IContainer container) where T: class
 		=> (T)Get(container, typeof(T));
 
 	/// <summary>
@@ -132,12 +138,12 @@ public static class IContainerExtensions {
 	/// <summary>
 	/// Construct the type, and register it.
 	/// </summary>
-	public static T ConstructAndRegister<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IContainer container) where T: notnull
+	public static T ConstructAndRegister<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IContainer container) where T: class
 		=> RegisterInstance<T>(container, Construct<T>(container));
 
 	/// <summary>
 	/// Register the type to be lazily constructed.
 	/// </summary>
-	public static void RegisterLazy<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IContainer container)
+	public static void RegisterLazy<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this IContainer container) where T: class
 		=> RegisterLazy(container, typeof(T));
 }
