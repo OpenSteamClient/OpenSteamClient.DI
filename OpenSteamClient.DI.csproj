@@ -5,16 +5,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageId>OpenSteamClient.DI</PackageId>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/OpenSteamClient/OpenSteamClient.DI</RepositoryUrl>
 
     <!-- Update the version here when you make changes -->
-    <VersionPrefix>1.0.2</VersionPrefix>
+    <VersionPrefix>1.0.3</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\"/>
+	<None Include="LICENSE" Pack="true" PackagePath=""/>
   </ItemGroup>
 
 </Project>
